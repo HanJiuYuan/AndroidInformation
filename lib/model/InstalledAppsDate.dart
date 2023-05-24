@@ -3,7 +3,6 @@ class InstalledAppsDate{
   late String appName;
   late String packageName;
   late String versionName;
-  late int versionCode;
   late int updateTime;
   late int installTime;
   late String appSize;
@@ -12,7 +11,6 @@ class InstalledAppsDate{
     required this.appName,
     required this.packageName,
     required this.versionName,
-    required this.versionCode,
     required this.updateTime,
     required this.installTime,
     required this.appSize
@@ -22,7 +20,6 @@ class InstalledAppsDate{
     appName = json['name'];
     packageName = json['packageName'];
     versionName = json['versionName'];
-    versionCode = json['versionCode'];
     updateTime = json['updateTime'];
     installTime = json['installTime'] ;
     appSize = json['appSize'].toString();
@@ -33,7 +30,6 @@ class InstalledAppsDate{
     map['appName'] = appName;
     map['packageName'] = packageName;
     map['versionName'] = versionName;
-    map['versionCode'] = versionCode;
     map['createTime'] = installTime;
     map['updateTime'] = updateTime;
     map['appSize'] =appSize;

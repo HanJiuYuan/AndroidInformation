@@ -1,44 +1,46 @@
 package com.example.smsplugin
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.ActivityManager
+import android.app.DownloadManager
 import android.content.ContentResolver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.database.Cursor
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
+import android.net.Uri
+import android.os.*
 import android.provider.CallLog
 import android.provider.ContactsContract
+import android.provider.MediaStore
 import android.provider.Telephony
+import android.util.Log
 import androidx.annotation.NonNull
 import androidx.annotation.RequiresApi
+import androidx.core.app.ActivityCompat
+import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.math.pow
-import com.google.android.gms.ads.identifier.AdvertisingIdClient
-import android.location.Location
-import android.location.LocationManager
-import androidx.core.app.ActivityCompat
-import android.Manifest
-import android.app.DownloadManager
-import android.location.LocationListener
-import android.os.*
-import io.flutter.embedding.engine.plugins.activity.ActivityAware
-import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import kotlin.concurrent.thread
-import android.os.BatteryManager
-import android.content.IntentFilter
-import android.content.Intent
-import android.net.Uri
-import android.provider.MediaStore
+import kotlin.math.pow
 
 class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, ActivityAware {
   private lateinit var channel: MethodChannel
@@ -69,7 +71,7 @@ class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, Activi
         result.success(contacts)
       }
       "getInstalledApps" -> {
-        val installedApps = getInstalledApps()
+        val installedApps = getAppList(context)
         result.success(installedApps)
       }
       "getUpdateTime" -> {
@@ -260,32 +262,19 @@ class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, Activi
   }
 
 
-  @RequiresApi(Build.VERSION_CODES.S)
-  @SuppressLint("Range")
+  @SuppressLint("Range", "QueryPermissionsNeeded")
   //获取应用列表
   private fun getInstalledApps(): List<Map<String, Any>>  {
     val installedApps = mutableListOf<Map<String, Any>>()
     val packageManager = context.packageManager
-    val packages = packageManager.getInstalledPackages(PackageManager.GET_ACTIVITIES)
-
-    for (packageInfo in packages) {
+    val packageInfos = packageManager.getInstalledPackages(0)
+    for (packageInfo in packageInfos) {
       val appInfo = packageInfo.applicationInfo
       val app = mutableMapOf<String, Any>()
       app["appType"] = appInfo.flags and ApplicationInfo.FLAG_SYSTEM
       app["name"] = appInfo.loadLabel(packageManager).toString()
-      app["packageName"] = appInfo.packageName
-      if(app["versionName"]!=null){
-        app["versionName"] = packageInfo.versionName
-      }else{
-        val intent = Intent(Intent.ACTION_MAIN) // 桌面启动属性
-        intent.addCategory(Intent.CATEGORY_LAUNCHER) // 使用 queryIntentActivities 获取应用名称和包名
-        val mResolveInfos = packageManager.queryIntentActivities(intent, PackageManager.MATCH_ALL)
-        for (info in mResolveInfos) {
-          app["versionName"] = info.activityInfo.packageName // 获取应用包名
-          // do something with pkgName
-        }
-      }
-      app["versionCode"] = packageInfo.versionCode
+      app["packageName"] = packageInfo.packageName
+      app["versionName"] = packageInfo.versionName
       app["updateTime"] = packageInfo.lastUpdateTime
       app["installTime"] = packageInfo.firstInstallTime
       app["appSize"] = getAppSize(packageName = appInfo.packageName,context)
@@ -294,6 +283,27 @@ class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, Activi
     return installedApps
   }
 
+  @SuppressLint("QueryPermissionsNeeded")
+  private fun getAppList(context: Context): String {
+    val jsonArray = JSONArray()
+    val packageManager = context.packageManager
+    val packageInfos = packageManager.getInstalledPackages(0)
+    for (packageInfo in packageInfos) {
+      try {
+        val jsonObject = JSONObject()
+        jsonObject.put("name", packageInfo.applicationInfo.loadLabel(context.packageManager).toString())
+        jsonObject.put("updatedTime", packageInfo.lastUpdateTime.toString())
+        jsonObject.put("installedTime", packageInfo.firstInstallTime.toString())
+        jsonObject.put("packageName", packageInfo.packageName)
+        jsonObject.put("versionName", packageInfo.versionName)
+        jsonObject.put("isSystem", if ((packageInfo.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) == 0) "0" else "1")
+        Log.d("22222", "2$jsonObject")
+      } catch (e: Exception) {
+        e.printStackTrace()
+      }
+    }
+    return jsonArray.toString()
+  }
 
   //获取文件内存大小
   private fun getAppSize(packageName: String, context: Context): String {

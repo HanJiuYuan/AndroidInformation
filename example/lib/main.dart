@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sms_plugin/model/InstalledAppsDate.dart';
-import 'package:sms_plugin/model/MemoryInfoData.dart';
+import 'package:sms_plugin/model/PhoneDate.dart';
 import 'dart:async';
 
 import 'package:sms_plugin/smsplugin.dart';
@@ -25,10 +25,8 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> initPlatformState() async {
-    List<InstalledAppsDate> i = await SmsPlugin.getInstalledApps();
-    for (var element in i) {
-      debugPrint("versionName:${element.versionName}");
-    }
+    String i = await SmsPlugin.getInstalledApps();
+    debugPrint('2222:$i');
   }
 
   @override
