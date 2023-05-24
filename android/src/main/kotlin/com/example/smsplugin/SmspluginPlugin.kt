@@ -92,7 +92,7 @@ class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, Activi
           }
         } catch (e: Exception) {
           a.runOnUiThread {
-            e.javaClass.canonicalName?.let { result.error(it, e.localizedMessage, null) }
+            e.javaClass.canonicalName?.let { result.success("null") }
           }
         }
       }
@@ -259,7 +259,9 @@ class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, Activi
     return contacts
   }
 
+
   @SuppressLint("Range")
+  //获取应用列表
   private fun getInstalledApps(): List<Map<String, Any>>  {
     val installedApps = mutableListOf<Map<String, Any>>()
     val packageManager = context.packageManager

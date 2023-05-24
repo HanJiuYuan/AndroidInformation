@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sms_plugin/model/InstalledAppsDate.dart';
 import 'package:sms_plugin/model/MemoryInfoData.dart';
 import 'dart:async';
 
@@ -24,8 +25,8 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> initPlatformState() async {
-    // String i =await SmsPlugin.gaId();
-
+    String gaid = await SmsPlugin.getGaId();
+    debugPrint('gaid: ${gaid.toString()}');
   }
 
   @override

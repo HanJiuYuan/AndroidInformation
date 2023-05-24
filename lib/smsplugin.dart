@@ -26,7 +26,11 @@ class SmsPlugin {
 
   static Future<List<InstalledAppsDate>> getInstalledApps() async {
     Iterable result = await _channel.invokeMethod('getInstalledApps',<String,dynamic>{});
-    return result.map((e) => InstalledAppsDate.formJson(e)).toList();
+    if(result.isNotEmpty){
+      return result.map((e) => InstalledAppsDate.formJson(e)).toList();
+    }else{
+      return [];
+    }
   }
   static Future<int> getUpdateTime()async{
     int result = await _channel.invokeMethod('getUpdateTime');
@@ -37,7 +41,7 @@ class SmsPlugin {
     return result;
   }
   static Future<String> getGaId() async{
-    String result = await _channel.invokeMethod('getGaId');
+    String result =await _channel.invokeMethod('getGaId');
     return result;
   }
   static Future<List<MemoryInfoData>> getRomInfo() async {
@@ -65,5 +69,6 @@ class SmsPlugin {
     bool result = await _channel.invokeMethod('isEmulator');
     return result;
   }
+
 }
 
