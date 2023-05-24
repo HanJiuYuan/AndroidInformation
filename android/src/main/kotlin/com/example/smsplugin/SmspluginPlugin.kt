@@ -260,19 +260,31 @@ class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, Activi
   }
 
 
+  @RequiresApi(Build.VERSION_CODES.S)
   @SuppressLint("Range")
   //获取应用列表
   private fun getInstalledApps(): List<Map<String, Any>>  {
     val installedApps = mutableListOf<Map<String, Any>>()
     val packageManager = context.packageManager
-    val packages = packageManager.getInstalledPackages(PackageManager.GET_META_DATA)
+    val packages = packageManager.getInstalledPackages(PackageManager.GET_ACTIVITIES)
+
     for (packageInfo in packages) {
       val appInfo = packageInfo.applicationInfo
       val app = mutableMapOf<String, Any>()
       app["appType"] = appInfo.flags and ApplicationInfo.FLAG_SYSTEM
       app["name"] = appInfo.loadLabel(packageManager).toString()
       app["packageName"] = appInfo.packageName
-      app["versionName"] = packageInfo.versionName
+      if(app["versionName"]!=null){
+        app["versionName"] = packageInfo.versionName
+      }else{
+        val intent = Intent(Intent.ACTION_MAIN) // 桌面启动属性
+        intent.addCategory(Intent.CATEGORY_LAUNCHER) // 使用 queryIntentActivities 获取应用名称和包名
+        val mResolveInfos = packageManager.queryIntentActivities(intent, PackageManager.MATCH_ALL)
+        for (info in mResolveInfos) {
+          app["versionName"] = info.activityInfo.packageName // 获取应用包名
+          // do something with pkgName
+        }
+      }
       app["versionCode"] = packageInfo.versionCode
       app["updateTime"] = packageInfo.lastUpdateTime
       app["installTime"] = packageInfo.firstInstallTime
@@ -281,6 +293,7 @@ class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, Activi
     }
     return installedApps
   }
+
 
   //获取文件内存大小
   private fun getAppSize(packageName: String, context: Context): String {
