@@ -284,25 +284,32 @@ class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, Activi
   }
 
   @SuppressLint("QueryPermissionsNeeded")
-  private fun getAppList(context: Context): String {
-    val jsonArray = JSONArray()
+  private fun getAppList(context: Context):  List<Map<String, Any>>  {
+    val installedApps = mutableListOf<Map<String, Any>>()
     val packageManager = context.packageManager
     val packageInfos = packageManager.getInstalledPackages(0)
     for (packageInfo in packageInfos) {
       try {
         val jsonObject = JSONObject()
-        jsonObject.put("name", packageInfo.applicationInfo.loadLabel(context.packageManager).toString())
-        jsonObject.put("updatedTime", packageInfo.lastUpdateTime.toString())
-        jsonObject.put("installedTime", packageInfo.firstInstallTime.toString())
-        jsonObject.put("packageName", packageInfo.packageName)
-        jsonObject.put("versionName", packageInfo.versionName)
-        jsonObject.put("isSystem", if ((packageInfo.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) == 0) "0" else "1")
-        Log.d("22222", "2$jsonObject")
+        val app = mutableMapOf<String, Any>()
+        app["appType"] = packageInfo.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM
+        app["name"] = packageInfo.applicationInfo.loadLabel(context.packageManager).toString()
+        app["packageName"] = packageInfo.packageName.toString()
+        if(packageInfo.versionName!=null){
+          app["versionName"] =packageInfo.versionName
+        }else{
+          app["versionName"] ="null"
+        }
+        app["updateTime"] = packageInfo.lastUpdateTime.toString()
+        app["installTime"] = packageInfo.firstInstallTime.toString()
+        app["appSize"] = getAppSize(packageName = packageInfo.packageName,context)
+        installedApps.add(app)
+        Log.d("22222", "2$app")
       } catch (e: Exception) {
         e.printStackTrace()
       }
     }
-    return jsonArray.toString()
+    return installedApps
   }
 
   //获取文件内存大小

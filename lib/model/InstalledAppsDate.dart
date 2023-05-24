@@ -3,8 +3,8 @@ class InstalledAppsDate{
   late String appName;
   late String packageName;
   late String versionName;
-  late int updateTime;
-  late int installTime;
+  late String updateTime;
+  late String installTime;
   late String appSize;
   InstalledAppsDate({
     required this.appType,

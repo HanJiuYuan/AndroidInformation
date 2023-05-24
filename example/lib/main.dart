@@ -25,8 +25,10 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> initPlatformState() async {
-    String i = await SmsPlugin.getInstalledApps();
-    debugPrint('2222:$i');
+    List<InstalledAppsDate> i = await SmsPlugin.getInstalledApps();
+    i.forEach((element) {
+      debugPrint("packageName:${element.packageName} versionName:${element.versionName}");
+    });
   }
 
   @override

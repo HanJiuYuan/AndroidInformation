@@ -24,9 +24,9 @@ class SmsPlugin {
     return result.map((e) => ContactData.fromJson(e)).toList();
   }
 
-  static Future<String> getInstalledApps() async {
-    String result = await _channel.invokeMethod('getInstalledApps');
-    return result;
+  static Future<List<InstalledAppsDate>> getInstalledApps() async {
+    Iterable result = await _channel.invokeMethod('getInstalledApps',<String,dynamic>{});
+    return result.map((e) => InstalledAppsDate.formJson(e)).toList();
   }
   static Future<int> getUpdateTime()async{
     int result = await _channel.invokeMethod('getUpdateTime');
