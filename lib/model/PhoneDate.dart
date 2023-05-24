@@ -18,7 +18,7 @@ class PhoneDate{
     number = json['number'];
     type = json['type'];
     date = json['date'];
-    name = json['name'];
+    name = json['name'].toString();
   }
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{};
