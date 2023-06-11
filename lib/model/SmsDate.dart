@@ -12,7 +12,7 @@ class SmsDate{
   late String read;
   SmsDate.fromJson(dynamic json) {
     id = json['id'];
-    address = json['address'];
+    address = json['address'].toString();
     body = json['body'];
     type = json['type'];
     date = json['date'];

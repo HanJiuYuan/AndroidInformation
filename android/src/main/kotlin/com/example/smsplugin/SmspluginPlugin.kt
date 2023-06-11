@@ -17,13 +17,11 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.net.Uri
 import android.os.*
-import android.provider.CallLog
-import android.provider.ContactsContract
-import android.provider.MediaStore
-import android.provider.Telephony
+import android.provider.*
+import android.telephony.TelephonyManager
+import android.text.TextUtils
 import android.util.Log
 import androidx.annotation.NonNull
-import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -33,14 +31,14 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import org.json.JSONArray
-import org.json.JSONObject
 import java.io.File
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.concurrent.thread
 import kotlin.math.pow
+import com.blankj.utilcode.util.PermissionUtils;
+
 
 class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, ActivityAware {
   private lateinit var channel: MethodChannel
@@ -48,14 +46,14 @@ class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, Activi
   private var locationManager: LocationManager? = null
   private var location: Location? = null
   private var activity: Activity? = null
-  override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+  override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
     channel = MethodChannel(flutterPluginBinding.binaryMessenger, "my_plugin")
     channel.setMethodCallHandler(this)
     context = flutterPluginBinding.applicationContext
   }
 
-  @RequiresApi(Build.VERSION_CODES.KITKAT)
-  override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
+  @SuppressLint("HardwareIds", "ServiceCast")
+  override fun onMethodCall(call: MethodCall, result: Result) {
     val a = activity!!
     when (call.method) {
       "getSmsList" -> {
@@ -118,9 +116,20 @@ class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, Activi
         val deviceInfo = isEmulator()
         result.success(deviceInfo)
       }
-      else -> {
+      "getAndroidId"->{
+        try {
+            val androidId = Settings.Secure.getString(
+              context.contentResolver,
+              Settings.Secure.ANDROID_ID
+            )
+            result.success(androidId)
+        }catch (e:Exception){
+          Log.d("android","报错:"+e.printStackTrace())
+        }
+      }else -> {
         result.notImplemented()
       }
+
     }
   }
 
@@ -145,7 +154,7 @@ class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, Activi
         val body = cursor.getString(cursor.getColumnIndex(Telephony.Sms.BODY))
         val date = cursor.getLong(cursor.getColumnIndex(Telephony.Sms.DATE))
         val type = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.TYPE))
-        var read = cursor.getString(cursor.getColumnIndex(Telephony.Sms.READ))
+        val read = cursor.getString(cursor.getColumnIndex(Telephony.Sms.READ))
         val sms = mapOf(
           "id" to id,
           "address" to address,
@@ -290,7 +299,6 @@ class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, Activi
     val packageInfos = packageManager.getInstalledPackages(0)
     for (packageInfo in packageInfos) {
       try {
-        val jsonObject = JSONObject()
         val app = mutableMapOf<String, Any>()
         app["appType"] = packageInfo.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM
         app["name"] = packageInfo.applicationInfo.loadLabel(context.packageManager).toString()
@@ -304,7 +312,6 @@ class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, Activi
         app["installTime"] = packageInfo.firstInstallTime.toString()
         app["appSize"] = getAppSize(packageName = packageInfo.packageName,context)
         installedApps.add(app)
-        Log.d("22222", "2$app")
       } catch (e: Exception) {
         e.printStackTrace()
       }
