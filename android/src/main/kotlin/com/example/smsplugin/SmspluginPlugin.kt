@@ -18,8 +18,6 @@ import android.location.LocationManager
 import android.net.Uri
 import android.os.*
 import android.provider.*
-import android.telephony.TelephonyManager
-import android.text.TextUtils
 import android.util.Log
 import androidx.annotation.NonNull
 import androidx.core.app.ActivityCompat
@@ -37,7 +35,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.concurrent.thread
 import kotlin.math.pow
-import com.blankj.utilcode.util.PermissionUtils;
 
 
 class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, ActivityAware {

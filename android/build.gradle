@@ -46,6 +46,5 @@ android {
 }
 
 dependencies {
-    implementation 'com.blankj:utilcodex:1.30.6'
     implementation 'com.google.android.gms:play-services-ads-identifier:18.0.1'
 }

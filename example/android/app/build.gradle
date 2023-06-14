@@ -67,6 +67,5 @@ flutter {
 }
 
 dependencies {
-    implementation 'com.blankj:utilcodex:1.30.6'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
