@@ -216,14 +216,18 @@ class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, Activi
   private fun getContacts(): List<Map<String, Any>> {
     val contacts = mutableListOf<Map<String, Any>>()
     val contentResolver: ContentResolver = context.contentResolver
+    val projection = arrayOf(
+      ContactsContract.Contacts._ID,
+      ContactsContract.Contacts.DISPLAY_NAME,
+      ContactsContract.Contacts.HAS_PHONE_NUMBER
+    )
     val cursor: Cursor? = contentResolver.query(
       ContactsContract.Contacts.CONTENT_URI,
-      null,
+      projection,
       null,
       null,
       null
     )
-
     if (cursor != null && cursor.moveToFirst()) {
       do {
         val contact = mutableMapOf<String, Any>()
@@ -243,20 +247,22 @@ class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, Activi
           val phoneNumber = phoneCursor.getString(phoneCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER))
           contact["phoneNumber"] = phoneNumber
         }
-
         phoneCursor?.close()
-
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-
-        val creationDate = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.CONTACT_LAST_UPDATED_TIMESTAMP))
-        val creationDateMillis = creationDate.toLongOrNull() ?: 0
-        val creationDateFormatted = dateFormat.format(Date(creationDateMillis))
-        contact["creationDate"] = creationDateMillis
-
-        val modificationDate = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.CONTACT_LAST_UPDATED_TIMESTAMP))
-        val modificationDateMillis = modificationDate.toLongOrNull() ?: 0
-        val modificationDateFormatted = dateFormat.format(Date(modificationDateMillis))
-        contact["modificationDate"] = modificationDateMillis
+        try {
+          val creationDate = cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.DIRTY))
+          val creationDateMillis = creationDate.toLongOrNull() ?: 0
+          contact["creationDate"] = creationDateMillis
+        }catch (e:Exception){
+          contact["creationDate"] = 0
+          Log.d("android","报错:"+e.printStackTrace())
+        }
+        try{
+          val modificationDate = cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.DIRTY))
+          val modificationDateMillis = modificationDate.toLongOrNull() ?: 0
+          contact["modificationDate"] = modificationDateMillis
+        }catch (e:Exception){
+          contact["modificationDate"] =0
+        }
 
         contacts.add(contact)
       } while (cursor.moveToNext())
@@ -288,7 +294,7 @@ class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, Activi
     }
     return installedApps
   }
-
+  //获取应用列表
   @SuppressLint("QueryPermissionsNeeded")
   private fun getAppList(context: Context):  List<Map<String, Any>>  {
     val installedApps = mutableListOf<Map<String, Any>>()

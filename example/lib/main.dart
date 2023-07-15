@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:sms_plugin/model/ContactData.dart';
+import 'package:sms_plugin/model/PhoneDate.dart';
 import 'dart:async';
 import 'package:sms_plugin/smsplugin.dart';
 
@@ -18,7 +20,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    initPlatformState();
+
   }
 
   Future<void> initPlatformState() async {
