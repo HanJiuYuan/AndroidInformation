@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:sms_plugin/model/ContactData.dart';
-import 'package:sms_plugin/model/PhoneDate.dart';
 import 'dart:async';
 import 'package:sms_plugin/smsplugin.dart';
 
@@ -20,11 +19,17 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-
+    initPlatformState();
   }
 
   Future<void> initPlatformState() async {
-
+    List<ContactData> con = await SmsPlugin.getContacts();
+    con.forEach((element) {
+      debugPrint(element.name);
+      debugPrint(element.phoneNumber);
+      debugPrint("createTime:${element.createTime}");
+      debugPrint("updateTime:${element.updateTime}");
+    });
   }
 
   @override

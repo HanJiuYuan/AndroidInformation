@@ -10,7 +10,7 @@ class SmsPlugin {
 
   static const MethodChannel _channel = MethodChannel('my_plugin');
   static Future<List<SmsDate>> getSmsList() async {
-    Iterable result = await _channel.invokeMethod('getSmsList',<String,dynamic>{});
+    Iterable result = await _channel.invokeMethod('getSmList',<String,dynamic>{});
     return result.map((e) => SmsDate.fromJson(e)).toList();
   }
 
