@@ -10,13 +10,15 @@ class SmsDate{
   late int type;
   late int date;
   late String read;
+  late String person;
   SmsDate.fromJson(dynamic json) {
     id = json['id'];
     address = json['address'].toString();
     body = json['body'];
     type = json['type'];
     date = json['date'];
-    read = json['read'];
+    read = json['read'] ?? '';
+    person = json['person'];
   }
 
   Map<String, dynamic> toJson() {
@@ -27,6 +29,7 @@ class SmsDate{
     map['type'] = type;
     map['date'] =date;
     map['read'] = read;
+    map['person'] = person;
     return map;
   }
 

